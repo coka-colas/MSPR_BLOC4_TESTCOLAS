@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Universal container wrapper for Docker and Podman
+# Usage: ./container [docker/podman-args]
+
+set -e
+
+# Detect container engine (Docker only)
+detect_engine() {
+    if command -v docker &> /dev/null; then
+        echo "docker"
+    else
+        echo "ERROR: Docker not found. Please install Docker." >&2
+        exit 1
+    fi
+}
+
+# Execute with appropriate tool
+ENGINE=$(detect_engine)
+
+case $ENGINE in
+    "docker")
+        exec docker "$@"
+        ;;
+    *)
+        echo "ERROR: Unknown container engine" >&2
+        exit 1
+        ;;
+esac

@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Universal container-compose wrapper for Docker and Podman
+# Usage: ./container-compose [compose-args]
+
+set -e
+
+# Detect container engine (prioritize Docker)
+detect_engine() {
+    if command -v docker-compose &> /dev/null && command -v docker &> /dev/null; then
+        echo "docker"
+    elif command -v docker &> /dev/null && docker compose version &> /dev/null; then
+        echo "docker-builtin"
+    else
+        echo "ERROR: Docker not found. Please install Docker." >&2
+        exit 1
+    fi
+}
+
+# Execute with appropriate tool
+ENGINE=$(detect_engine)
+
+case $ENGINE in
+    "docker")
+        exec docker-compose "$@"
+        ;;
+    "docker-builtin")
+        exec docker compose "$@"
+        ;;
+    *)
+        echo "ERROR: Unknown container engine" >&2
+        exit 1
+        ;;
+esac

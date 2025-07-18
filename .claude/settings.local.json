@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./container ps:*)",
+      "Bash(./run-services.sh:*)",
+      "Bash(python:*)",
+      "Bash(pip3 install:*)",
+      "Bash(podman system reset:*)",
+      "Bash(podman-compose up:*)"
+    ],
+    "deny": []
+  }
+}
