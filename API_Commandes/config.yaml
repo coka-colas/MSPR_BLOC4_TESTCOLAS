@@ -1,0 +1,32 @@
+#Fichier qui regoupe les configurations de l'application*
+
+#Variables d'environnement pour la base de données
+database:
+  name: api_commandes
+  user: postgres
+  password: root  
+  #ajouter db à la place de localhost
+  host: postgres
+  port: 5432
+  engine: postgresql
+
+#Variables d'environnement pour le message broker (RabbitMQ)
+message_broker:
+  #host: localhost
+  host: rabbitmq   #si tu lances via docker-compose et que ton service s'appelle rabbitmq
+  port: 5672
+  queue_name: "client_events"
+  username: "admin"
+  password: "admin"
+
+#Variables d'environnement pour la configuration de l'API
+api_keys:
+  admin_key: "admin"
+  user_key: "user"
+
+#Variables pour l'accès aux routes publique de l'API
+excluded_paths:
+  - "/docs"
+  - "/openapi.json"
+  - "/api/clients/login"
+  - "/api/clients/me"

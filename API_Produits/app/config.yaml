@@ -1,0 +1,20 @@
+# Configuration pour API_Produits
+database:
+  name: produitsdb
+  user: postgres
+  password: root  
+  host: localhost
+  port: 5432
+  engine: postgresql
+
+# Configuration RabbitMQ
+message_broker:
+  host: localhost
+  port: 5672
+  queue_name: product_queue
+  user: guest
+  password: guest
+
+# URLs des autres services
+services:
+  clients_api: "http://localhost:8002"

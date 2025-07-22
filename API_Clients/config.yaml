@@ -1,0 +1,31 @@
+#Variables d'environnement pour la configuration de l'API Clients
+database:
+  name: clientsdb
+  user: postgres
+  password: root  
+  host: db
+  #host: db  #si tu lances via docker-compose et que ton service s
+  port: 5432
+  engine: postgresql
+
+# Varables d'environnement pour la configuration de l'API Clients
+jwt:
+  secret: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6"
+  algorithm: "HS256"
+  expiration_minutes: 30
+
+# Configuration du message broker pour l'API Clients
+message_broker:
+  #host: localhost
+  host: "rabbitmq-shared"   #si tu lances via docker-compose et que ton service s'appelle rabbitmq
+  port: 5672
+  queue_name: "client_events"
+  user: "guest"
+  password: "guest"
+  
+# Routes publiques de l'API Clients
+excluded_paths:
+  - "/docs"
+  - "/openapi.json"
+  - "/api/clients/login"
+  - "/api/clients/me"

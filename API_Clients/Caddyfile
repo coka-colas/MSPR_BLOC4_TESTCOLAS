@@ -1,0 +1,10 @@
+--Fichier système pour afficher le frontend--
+:8085 {
+    root * frontend/
+    try_files {path} /welcome.html
+    file_server
+    handle_path /api/* {
+        reverse_proxy http://client-api:8000
+    }
+    reverse_proxy http://frontend:80
+}

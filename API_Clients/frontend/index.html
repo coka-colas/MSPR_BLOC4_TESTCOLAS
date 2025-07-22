@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Paye ton Kawa - Inscription</title>
+    <style>
+        /* Reset basique */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Fond global */
+        body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Carte centrale */
+        .registration-card {
+            background-color: white;
+            width: 90%;
+            max-width: 800px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Titre en haut */
+        .registration-card .title {
+            background-color: #8B4513;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* Contenu divisé en deux colonnes */
+        .form-container {
+            display: grid;
+            grid-template-columns: 1fr 2px 1fr;
+            /* 2 colonnes + séparateur */
+            gap: 20px;
+            padding: 20px;
+        }
+
+        /* Séparateur vertical */
+        .divider {
+            background-color: #8B4513;
+            width: 2px;
+        }
+
+        /* Champs de formulaire */
+        .form-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        input,
+        select {
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #8B4513;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(139, 69, 19, 0.2);
+        }
+
+        /* Bouton d'envoi */
+        .submit-button {
+            background-color: #8B4513;
+            color: white;
+            padding: 14px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .submit-button:hover {
+            background-color: #A0522D;
+        }
+
+        /* Zone de réponse */
+        .output {
+            margin-top: 20px;
+            padding: 16px;
+            font-size: 14px;
+            white-space: pre-wrap;
+            background-color: #f1f1f1;
+            border-radius: 6px;
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-container {
+                grid-template-columns: 1fr;
+            }
+
+            .divider {
+                display: none;
+            }
+
+            .form-section {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Carte d'inscription -->
+    <div class="registration-card">
+        <div class="title">Paye ton Kawa - Inscription</div>
+
+        <div class="form-container">
+            <!-- Section gauche -->
+            <div class="form-section">
+                <input type="text" name="username" placeholder="Nom d’utilisateur" required>
+                <input type="text" name="first_name" placeholder="Prénom" required>
+                <input type="text" name="last_name" placeholder="Nom" required>
+                <input type="text" name="postal_code" placeholder="Code postal" required>
+                <input type="text" name="city" placeholder="Ville" required>
+            </div>
+
+            <!-- Barre verticale marron -->
+            <div class="divider"></div>
+
+            <!-- Section droite -->
+            <div class="form-section">
+                <input type="text" name="profile_first_name" placeholder="Prénom du profil" required>
+                <input type="text" name="profile_last_name" placeholder="Nom du profil" required>
+                <input type="text" name="company_name" placeholder="Nom de l’entreprise (facultatif)">
+                <input type="email" name="email" placeholder="Email" required>
+                <input type="password" name="password" placeholder="Mot de passe" required>
+                <input type="password" name="confirm_password" placeholder="Confirmer le mot de passe" required>
+            </div>
+        </div>
+
+        <!-- Bouton soumettre -->
+        <div style="padding: 0 20px 20px;">
+            <button type="submit" class="submit-button" id="submit-btn">Créer mon compte</button>
+            <pre class="output" id="output"></pre>
+        </div>
+    </div>
+
+    <!-- Script JS -->
+    <script>
+        const api = "http://localhost:8000/api/clients";
+
+        document.querySelector("#submit-btn").addEventListener("click", async function (e) {
+            e.preventDefault();
+
+            const form = document.querySelectorAll("input, select");
+            const data = {};
+
+            // Récupère les valeurs du formulaire
+            form.forEach(input => {
+                if (input.name) {
+                    data[input.name] = input.value;
+                }
+            });
+
+            const output = document.getElementById("output");
+            output.style.display = "block";
+            output.textContent = "Envoi en cours...";
+
+            try {
+                const response = await fetch(api, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    output.textContent = "✅ Compte créé avec succès !\n" + JSON.stringify(result, null, 2);
+                } else {
+                    output.textContent = `❌ Échec : ${result.detail || JSON.stringify(result)}`;
+                }
+
+            } catch (error) {
+                output.textContent = "🌐 Erreur réseau : " + error.message;
+            }
+        });
+    </script>
+</body>
+
+</html>

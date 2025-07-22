@@ -1,0 +1,9 @@
+[MASTER]
+ignore=.venv
+disable=
+    C0114,
+    C0303,
+    C0304,
+    c0116,
+    C0115,
+    no-member

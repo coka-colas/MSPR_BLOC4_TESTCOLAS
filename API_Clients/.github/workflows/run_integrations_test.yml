@@ -1,0 +1,115 @@
+name: Run Integration Tests
+
+on:
+  push:
+    branches:
+      - main
+      - test
+  pull_request:
+    branches:
+      - main
+      - test
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      #- name: Install dependencies
+      #  run: |
+      #    pip install -r requirements.txt
+      #    pip install prospector
+      #    pip install pytest requests
+      #    pip install -e .
+
+      #- name: Run integration tests locally
+      #  env:
+      #    DATABASE_URL: "sqlite:///:memory:"
+      #  run: |
+      #    python -m pytest ./test/validation/test_validation_client.py      
+
+  docker-test:
+    needs: integration-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Install Trivy (Linux binary)
+        run: |
+          GITHUB_API="https://api.github.com/repos/aquasecurity/trivy/releases/latest "
+          echo "[+] Appel à l'API GitHub..."
+          response=$(curl -s $GITHUB_API)
+
+          # Récupère la version de Trivy
+          TRIVY_VERSION=$(echo "$response" | jq -r '.tag_name' | sed 's/v//')
+
+          if [[ -z "$TRIVY_VERSION" ]]; then
+            echo "❌ Impossible de récupérer la version de Trivy"
+            exit 1
+          fi
+
+          echo "[+] Version détectée : $TRIVY_VERSION"
+
+          # Affiche tous les assets disponibles (debug)
+          echo "[DEBUG] Assets disponibles :"
+          echo "$response" | jq -r '.assets[].name'
+
+          # Cherche un binaire Linux 64-bit au format .tar.gz
+          DOWNLOAD_URL_LINUX_AMD64=$(echo "$response" | jq -r '.assets[] | select(.name | test("linux.*64.*\\.tar\\.gz"; "i")) | .browser_download_url' | head -n1)
+
+          if [[ -z "$DOWNLOAD_URL_LINUX_AMD64" || "$DOWNLOAD_URL_LINUX_AMD64" == *"null"* ]]; then
+            echo "❌ Aucun binaire Linux AMD64 (.tar.gz) trouvé"
+            exit 1
+          fi
+
+          echo "[+] Téléchargement depuis : $DOWNLOAD_URL_LINUX_AMD64"
+
+          # Télécharge le binaire
+          wget -qO /tmp/trivy.tar.gz "$DOWNLOAD_URL_LINUX_AMD64"
+
+          if [ $? -ne 0 ]; then
+            echo "❌ Échec du téléchargement depuis $DOWNLOAD_URL_LINUX_AMD64"
+            exit 1
+          fi
+
+          # Installe Trivy
+          sudo tar -C /usr/local/bin -xzf /tmp/trivy.tar.gz trivy
+
+          # Vérifie l'installation
+          trivy --version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Scan vulnerabilities in Dockerfile
+        run: |
+          trivy fs --security-checks vuln .
+
+      - name: Build Docker image
+        run: |
+          docker build -t api_clients .
+
+      - name: Start RabbitMQ for testing
+        run: |
+          docker run -d --hostname rabbitmq --name rabbitmq \
+            -p 5672:5672 -p 15672:15672 \
+            -e RABBITMQ_DEFAULT_USER=guest \
+            -e RABBITMQ_DEFAULT_PASS=guest \
+            rabbitmq:3-management
+
+      #- name: Run tests inside Docker container
+      #  run: |
+      #    docker run --rm \
+      #      --network host \
+      #      -e DATABASE_URL="sqlite:///:memory:" \
+      #      api_clients python -m pytest test/validation/test_validation_client.py 

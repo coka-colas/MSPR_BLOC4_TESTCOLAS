@@ -1,0 +1,10 @@
+# Utilise l'image officielle nginx
+FROM nginx:alpine
+
+# Copie tous les fichiers du frontend dans le dossier de nginx
+COPY . /usr/share/nginx/html
+
+# Expose le port 80
+EXPOSE 80
+
+# Pas besoin de CMD, nginx démarre automatiquement
