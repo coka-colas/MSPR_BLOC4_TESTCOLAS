@@ -1,4 +1,4 @@
---Fichier système pour afficher le frontend--
+# Fichier système pour afficher le frontend
 :8085 {
     root * frontend/
     try_files {path} /welcome.html

@@ -3,8 +3,8 @@ database:
   name: clientsdb
   user: postgres
   password: root  
-  host: db
-  #host: db  #si tu lances via docker-compose et que ton service s
+  host: clients-db
+  #host: clients-db  #si tu lances via docker-compose et que ton service s
   port: 5432
   engine: postgresql
 

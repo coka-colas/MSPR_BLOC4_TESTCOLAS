@@ -16,10 +16,14 @@ else:
         with open("config.yaml", "r", encoding="utf-8") as file_config:
             config = yaml.safe_load(file_config)
         db_config = config["database"]
-        SQLALCHEMY_DATABASE_URL = (
-            f"{db_config['engine']}://{db_config['user']}:{db_config['password']}"
-            f"@{db_config['host']}:{db_config.get('port')}/{db_config['name']}"
-        )
+        
+        if db_config['engine'] == 'sqlite':
+            SQLALCHEMY_DATABASE_URL = f"sqlite:///./{db_config['name']}"
+        else:
+            SQLALCHEMY_DATABASE_URL = (
+                f"{db_config['engine']}://{db_config['user']}:{db_config['password']}"
+                f"@{db_config['host']}:{db_config.get('port')}/{db_config['name']}"
+            )
     except KeyError as e:
         raise RuntimeError(f"Champ manquant dans config.yaml : {e}")
     except Exception as e:

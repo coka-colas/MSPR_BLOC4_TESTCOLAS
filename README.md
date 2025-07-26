@@ -20,9 +20,10 @@ This application consists of multiple microservices:
 
 Before running the application, ensure you have:
 
-- **Docker** (version 20.0 or higher)
-- **Docker Compose** (version 2.0 or higher)
+- **Docker Desktop for Windows** (with WSL2 backend recommended)
+- **Docker Compose** (included with Docker Desktop)
 - **Git** (for cloning the repository)
+- **PowerShell** or **Command Prompt** (for running scripts)
 
 ### Installation Steps
 
@@ -33,9 +34,15 @@ Before running the application, ensure you have:
    ```
 
 2. **Start the application**
-   ```bash
-   chmod +x start-application.sh
-   ./start-application.sh
+
+   **Using Windows Batch Script:**
+   ```cmd
+   start-application.bat
+   ```
+
+   **Using PowerShell (recommended):**
+   ```powershell
+   .\start-application.ps1
    ```
 
    The script will:
@@ -46,9 +53,15 @@ Before running the application, ensure you have:
    - Verify service health
 
 3. **Stop the application**
-   ```bash
-   chmod +x stop-application.sh
-   ./stop-application.sh
+
+   **Using Windows Batch Script:**
+   ```cmd
+   stop-application.bat
+   ```
+
+   **Using PowerShell:**
+   ```powershell
+   .\stop-application.ps1
    ```
 
 ## 🌐 Service Endpoints
@@ -111,17 +124,15 @@ The application includes health checks for all services:
 ### Common Issues
 
 1. **Docker not running**
-   ```bash
-   # Start Docker service
-   sudo systemctl start docker
-   ```
+   - Start Docker Desktop from Windows Start Menu
+   - Ensure WSL2 backend is enabled in Docker Desktop settings
 
 2. **Port conflicts**
    - Ensure ports 80, 5432, 5431, 5672, 8000, 8001, 8002, 8085, 15672 are available
-   - Check with: `netstat -tulpn | grep :<port>`
+   - Check with: `netstat -ano | findstr :<port>` (Windows)
 
 3. **Services not starting**
-   ```bash
+   ```cmd
    # Check logs
    docker-compose logs <service-name>
    
@@ -130,7 +141,7 @@ The application includes health checks for all services:
    ```
 
 4. **Database connection issues**
-   ```bash
+   ```cmd
    # Reset databases
    docker-compose down -v
    docker-compose up -d
@@ -138,12 +149,12 @@ The application includes health checks for all services:
 
 ### Debug Commands
 
-```bash
+```cmd
 # View all containers
 docker-compose ps
 
 # Enter a container
-docker exec -it <container-name> bash
+docker exec -it <container-name> sh
 
 # View specific service logs
 docker-compose logs -f api-clients
@@ -176,15 +187,15 @@ MSPR_Bloc4/
 
 ## 🛠️ Development
 
-To develop individual services:
+To develop individual services on Windows:
 
 1. Start dependencies only:
-   ```bash
+   ```cmd
    docker-compose up rabbitmq clients-db commandes-db -d
    ```
 
 2. Run service locally:
-   ```bash
+   ```cmd
    cd API_Clients
    pip install -r requirements.txt
    uvicorn app.main:app --reload --port 8002

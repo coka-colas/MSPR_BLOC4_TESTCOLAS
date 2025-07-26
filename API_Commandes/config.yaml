@@ -6,7 +6,7 @@ database:
   user: postgres
   password: root  
   #ajouter db à la place de localhost
-  host: postgres
+  host: commandes-db
   port: 5432
   engine: postgresql
 
