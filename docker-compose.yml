@@ -1,0 +1,216 @@
+version: '3.8'
+
+services:
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq-shared
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # PostgreSQL for API_Clients
+  clients-db:
+    image: postgres:15
+    container_name: clients-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: clientsdb
+      POSTGRES_PORT: 5432
+    ports:
+      - "5432:5432"
+    volumes:
+      - clients_postgres_data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d clientsdb"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+  # PostgreSQL for API_Commandes
+  commandes-db:
+    image: postgres:15
+    container_name: commandes-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: api_commandes
+    ports:
+      - "5431:5432"
+    volumes:
+      - commandes_postgres_data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d api_commandes"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+  # API Clients Service
+  api-clients:
+    build:
+      context: ./API_Clients
+      dockerfile: Dockerfile
+    container_name: client-api
+    ports:
+      - "8002:8002"
+    depends_on:
+      clients-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://postgres:root@clients-db:5432/clientsdb"
+      RABBITMQ_HOST: "rabbitmq-shared"
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: "guest"
+      RABBITMQ_PASSWORD: "guest"
+      QUEUE_NAME: "client_events"
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - ./API_Clients:/app
+
+  # API Commandes Service
+  api-commandes:
+    build:
+      context: ./API_Commandes
+      dockerfile: Dockerfile
+    container_name: commande-api
+    ports:
+      - "8000:8000"
+    depends_on:
+      commandes-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://postgres:root@commandes-db:5432/api_commandes"
+      RABBITMQ_HOST: "rabbitmq-shared"
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: "guest"
+      RABBITMQ_PASSWORD: "guest"
+      PYTHONPATH: "/app"
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - ./API_Commandes:/app
+
+  # API Produits Service
+  api-produits:
+    build:
+      context: ./API_Produits
+      dockerfile: Dockerfile
+    container_name: produit-api
+    ports:
+      - "8001:8001"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      RABBITMQ_HOST: "rabbitmq-shared"
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: "guest"
+      RABBITMQ_PASSWORD: "guest"
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - ./API_Produits:/app
+
+  # RabbitMQ Consumer for Orders
+  commandes-consumer:
+    build:
+      context: ./API_Commandes
+      dockerfile: Dockerfile
+    container_name: commandes-consumer
+    depends_on:
+      commandes-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      ENV: dev
+      RABBITMQ_HOST: "rabbitmq-shared"
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: "guest"
+      RABBITMQ_PASSWORD: "guest"
+      DATABASE_URL: "postgresql://postgres:root@commandes-db:5432/api_commandes"
+      PYTHONPATH: "/app"
+    restart: unless-stopped
+    networks:
+      - microservices-network
+    volumes:
+      - ./API_Commandes:/app
+    command: python -m app.consumer
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./API_Clients/frontend
+      dockerfile: Dockerfile.frontend
+    container_name: frontend
+    ports:
+      - "80:80"
+    networks:
+      - microservices-network
+    depends_on:
+      - api-clients
+
+  # Reverse Proxy Caddy
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    ports:
+      - "8085:80"
+    volumes:
+      - ./API_Clients/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - microservices-network
+    depends_on:
+      - api-clients
+      - api-commandes
+      - api-produits
+
+networks:
+  microservices-network:
+    driver: bridge
+
+volumes:
+  rabbitmq_data:
+  clients_postgres_data:
+  commandes_postgres_data:
+  caddy_data:
+  caddy_config:
