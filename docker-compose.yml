@@ -62,6 +62,26 @@ services:
       timeout: 10s
       retries: 5
 
+  # PostgreSQL for API_Produits
+  produits-db:
+    image: postgres:15
+    container_name: produits-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: api_produits
+    ports:
+      - "5433:5432"
+    volumes:
+      - produits_postgres_data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d api_produits"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
   # API Clients Service
   api-clients:
     build:
@@ -76,6 +96,7 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
+      APP_ENV: "prod"
       DATABASE_URL: "postgresql://postgres:root@clients-db:5432/clientsdb"
       RABBITMQ_HOST: "rabbitmq-shared"
       RABBITMQ_PORT: "5672"
@@ -106,12 +127,15 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
+      APP_ENV: "prod"
       DATABASE_URL: "postgresql://postgres:root@commandes-db:5432/api_commandes"
       RABBITMQ_HOST: "rabbitmq-shared"
       RABBITMQ_PORT: "5672"
       RABBITMQ_USER: "guest"
       RABBITMQ_PASSWORD: "guest"
       PYTHONPATH: "/app"
+      PRODUCTS_SERVICE_URL: "http://produit-api:8001"
+      CLIENTS_SERVICE_URL: "http://client-api:8002"
     networks:
       - microservices-network
     healthcheck:
@@ -131,9 +155,13 @@ services:
     ports:
       - "8001:8001"
     depends_on:
+      produits-db:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
     environment:
+      APP_ENV: "prod"
+      DATABASE_URL: "postgresql://postgres:root@produits-db:5432/api_produits"
       RABBITMQ_HOST: "rabbitmq-shared"
       RABBITMQ_PORT: "5672"
       RABBITMQ_USER: "guest"
@@ -160,6 +188,7 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
+      APP_ENV: "prod"
       ENV: dev
       RABBITMQ_HOST: "rabbitmq-shared"
       RABBITMQ_PORT: "5672"
@@ -212,5 +241,6 @@ volumes:
   rabbitmq_data:
   clients_postgres_data:
   commandes_postgres_data:
+  produits_postgres_data:
   caddy_data:
   caddy_config:
