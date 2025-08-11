@@ -34,6 +34,7 @@ services:
       - "5432:5432"
     volumes:
       - clients_postgres_data:/var/lib/postgresql/data
+      - ./API_Clients/customers.sql:/docker-entrypoint-initdb.d/01-init.sql
     networks:
       - microservices-network
     healthcheck:
@@ -54,6 +55,7 @@ services:
       - "5431:5432"
     volumes:
       - commandes_postgres_data:/var/lib/postgresql/data
+      - ./API_Commandes/orders.sql:/docker-entrypoint-initdb.d/01-init.sql
     networks:
       - microservices-network
     healthcheck:
@@ -74,6 +76,7 @@ services:
       - "5433:5432"
     volumes:
       - produits_postgres_data:/var/lib/postgresql/data
+      - ./API_Produits/products.sql:/docker-entrypoint-initdb.d/01-init.sql
     networks:
       - microservices-network
     healthcheck:
@@ -176,32 +179,6 @@ services:
     volumes:
       - ./API_Produits:/app
 
-  # RabbitMQ Consumer for Orders
-  commandes-consumer:
-    build:
-      context: ./API_Commandes
-      dockerfile: Dockerfile
-    container_name: commandes-consumer
-    depends_on:
-      commandes-db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    environment:
-      APP_ENV: "prod"
-      ENV: dev
-      RABBITMQ_HOST: "rabbitmq-shared"
-      RABBITMQ_PORT: "5672"
-      RABBITMQ_USER: "guest"
-      RABBITMQ_PASSWORD: "guest"
-      DATABASE_URL: "postgresql://postgres:root@commandes-db:5432/api_commandes"
-      PYTHONPATH: "/app"
-    restart: unless-stopped
-    networks:
-      - microservices-network
-    volumes:
-      - ./API_Commandes:/app
-    command: python -m app.consumer
 
   # Frontend Service
   frontend:
