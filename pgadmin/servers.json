@@ -1,0 +1,34 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Clients Database",
+      "Group": "MSPR Databases",
+      "Host": "clients-db",
+      "Port": 5432,
+      "MaintenanceDB": "clientsdb",
+      "Username": "postgres",
+      "PassFile": "/tmp/pgpassfile",
+      "SSLMode": "prefer"
+    },
+    "2": {
+      "Name": "Commandes Database",
+      "Group": "MSPR Databases", 
+      "Host": "commandes-db",
+      "Port": 5432,
+      "MaintenanceDB": "api_commandes",
+      "Username": "postgres",
+      "PassFile": "/tmp/pgpassfile",
+      "SSLMode": "prefer"
+    },
+    "3": {
+      "Name": "Produits Database",
+      "Group": "MSPR Databases",
+      "Host": "produits-db", 
+      "Port": 5432,
+      "MaintenanceDB": "api_produits",
+      "Username": "postgres",
+      "PassFile": "/tmp/pgpassfile",
+      "SSLMode": "prefer"
+    }
+  }
+}

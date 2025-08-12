@@ -1,0 +1,3 @@
+clients-db:5432:clientsdb:postgres:root
+commandes-db:5432:api_commandes:postgres:root
+produits-db:5432:api_produits:postgres:root

@@ -193,6 +193,38 @@ services:
     depends_on:
       - api-clients
 
+  # Orders Frontend Service
+  orders-frontend:
+    build:
+      context: ./API_Commandes/frontend
+      dockerfile: Dockerfile.orders
+    container_name: orders-frontend
+    networks:
+      - microservices-network
+    depends_on:
+      - api-commandes
+
+  # pgAdmin for Database Management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@pgadmin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json
+      - ./pgadmin/pgpassfile:/tmp/pgpassfile
+    networks:
+      - microservices-network
+    depends_on:
+      - clients-db
+      - commandes-db
+      - produits-db
+
   # Reverse Proxy Caddy
   caddy:
     image: caddy:2-alpine
@@ -209,6 +241,7 @@ services:
       - api-clients
       - api-commandes
       - api-produits
+      - orders-frontend
 
 networks:
   microservices-network:
@@ -219,5 +252,6 @@ volumes:
   clients_postgres_data:
   commandes_postgres_data:
   produits_postgres_data:
+  pgadmin_data:
   caddy_data:
   caddy_config:
