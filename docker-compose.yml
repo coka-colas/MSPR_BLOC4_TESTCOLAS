@@ -1,43 +1,53 @@
-version: '3.8'
+# Ce fichier configure tous les services qui composent l'application e-commerce
+# Docker Compose permet de gérer plusieurs conteneurs comme un seul système
+# Chaque service (base de données, API, interface web) fonctionne dans son propre conteneur
+
+version: '3.8'  # Version du format Docker Compose utilisé
 
 services:
-  # RabbitMQ Message Broker
+  # =====================================================================
+  # RABBITMQ - Système de messagerie entre les services
+  # =====================================================================
   rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq-shared
+    image: rabbitmq:3-management                    # Image RabbitMQ avec interface d'administration
+    container_name: rabbitmq-shared                 # Nom du conteneur
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: guest                  # Nom d'utilisateur par défaut
+      RABBITMQ_DEFAULT_PASS: guest                  # Mot de passe par défaut
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "5672:5672"                                 # Port pour les connexions des applications
+      - "15672:15672"                               # Port pour l'interface web d'administration
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+      - rabbitmq_data:/var/lib/rabbitmq             # Stockage persistant des messages
     networks:
-      - microservices-network
-    healthcheck:
+      - microservices-network                       # Réseau partagé entre tous les services
+    healthcheck:                                    # Vérification que le service fonctionne
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      interval: 30s                                 # Vérifier toutes les 30 secondes
+      timeout: 10s                                  # Timeout de 10 secondes
+      retries: 5                                    # 5 tentatives avant de considérer le service en panne
 
-  # PostgreSQL for API_Clients
+  # =====================================================================
+  # BASES DE DONNÉES PostgreSQL - Une pour chaque service
+  # =====================================================================
+  
+  # Base de données pour le service des clients
   clients-db:
-    image: postgres:15
-    container_name: clients-db
+    image: postgres:15                              # Version PostgreSQL 15
+    container_name: clients-db                      # Nom du conteneur
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
-      POSTGRES_DB: clientsdb
-      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres                       # Nom d'utilisateur de la base
+      POSTGRES_PASSWORD: root                       # Mot de passe de la base
+      POSTGRES_DB: clientsdb                        # Nom de la base de données
+      POSTGRES_PORT: 5432                           # Port PostgreSQL standard
     ports:
-      - "5432:5432"
+      - "5432:5432"                                 # Port exposé vers l'extérieur
     volumes:
-      - clients_postgres_data:/var/lib/postgresql/data
-      - ./API_Clients/customers.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - clients_postgres_data:/var/lib/postgresql/data                    # Stockage persistant des données
+      - ./API_Clients/customers.sql:/docker-entrypoint-initdb.d/01-init.sql # Script d'initialisation
     networks:
       - microservices-network
-    healthcheck:
+    healthcheck:                                    # Vérification de l'état de la base
       test: ["CMD-SHELL", "pg_isready -U postgres -d clientsdb"]
       interval: 5s
       timeout: 10s
